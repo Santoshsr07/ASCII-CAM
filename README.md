@@ -1,6 +1,6 @@
 # 📸 ASCII Cam — HD Engine
 
-![Banner](https://github.com/user-attachments/assets/REPLACE_WITH_YOUR_BANNER_LINK)
+![Banner](https://github.com/user-attachments/assets/7b754402-0602-49db-9915-3cf1e25f6a6b)
 
 A high-performance **real-time ASCII webcam renderer** built using pure HTML, CSS, and JavaScript.
 
