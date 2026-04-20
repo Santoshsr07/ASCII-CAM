@@ -1,5 +1,7 @@
 # 📸 ASCII Cam — HD Engine
 
+![Banner](https://github.com/user-attachments/assets/REPLACE_WITH_YOUR_BANNER_LINK)
+
 A high-performance **real-time ASCII webcam renderer** built using pure HTML, CSS, and JavaScript.
 
 Convert your live camera feed into stunning ASCII art with advanced controls, filters, and export features — all running directly in the browser.
@@ -65,16 +67,16 @@ Convert your live camera feed into stunning ASCII art with advanced controls, fi
 
 ## 🛠️ Tech Stack
 
-- HTML5
-- CSS3 (Glassmorphism + modern UI)
-- Vanilla JavaScript
-- Canvas API
-- WebRTC (`getUserMedia`)
+- HTML5  
+- CSS3 (Glassmorphism + modern UI)  
+- Vanilla JavaScript  
+- Canvas API  
+- WebRTC (`getUserMedia`)  
 
 ---
 
 ## 📦 Getting Started
 
-### 1. Clone the repository
+### Clone the repository
 ```bash
-git clone https://github.com/Santoshsr07/ascii-cam.git
+git clone https://github.com/Santoshsr07/ASCII-CAM.git
