@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASCII CAM — HD Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    :root {
+      --bg0: #080b10;
+      --bg1: #0d1117;
+      --bg2: #141b24;
+      --bg3: #1c2535;
+      --gb: rgba(255, 255, 255, 0.06);
+      --gbh: rgba(255, 255, 255, 0.12);
+      --ac: #00e5ff;
+      --acg: rgba(0, 229, 255, 0.15);
+      --gn: #00ff88;
+      --am: #ffaa00;
+      --rd: #ff4466;
+      --t0: #e8edf5;
+      --t1: #8896a8;
+      --t2: #4a5568;
+      --rsm: 6px;
+      --rmd: 10px;
+      --pw: 285px;
+      --fu: 'Space Grotesk', sans-serif;
+      --fm: 'JetBrains Mono', 'Courier New', monospace;
+      --tr: 0.2s cubic-bezier(0.4, 0, 0.2, 1)
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg0);
+      color: var(--t0);
+      font-family: var(--fu);
+      overflow: hidden
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image: linear-gradient(rgba(0, 229, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 229, 255, 0.025) 1px, transparent 1px);
+      background-size: 40px 40px
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.06) 2px, rgba(0, 0, 0, 0.06) 4px)
+    }
+
+    #app {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      z-index: 1
+    }
+
+    /* TOPBAR */
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      height: 50px;
+      background: rgba(8, 11, 16, 0.93);
+      border-bottom: 1px solid var(--gb);
+      backdrop-filter: blur(12px);
+      flex-shrink: 0;
+      z-index: 10
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 9px
+    }
+
+    .logo-icon {
+      width: 27px;
+      height: 27px;
+      border: 1.5px solid var(--ac);
+      border-radius: var(--rsm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--fm);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--ac);
+      animation: pglow 3s ease-in-out infinite
+    }
+
+    @keyframes pglow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 8px var(--acg), inset 0 0 8px var(--acg)
+      }
+
+      50% {
+        box-shadow: 0 0 20px rgba(0, 229, 255, 0.3), inset 0 0 14px rgba(0, 229, 255, 0.2)
+      }
+    }
+
+    .logo-txt {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase
+    }
+
+    .logo-badge {
+      font-family: var(--fm);
+      font-size: 9px;
+      color: var(--t2);
+      background: var(--bg2);
+      border: 1px solid var(--gb);
+      padding: 1px 5px;
+      border-radius: 3px
+    }
+
+    .t-stats {
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .spill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--bg2);
+      border: 1px solid var(--gb);
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-family: var(--fm);
+      font-size: 11px;
+      color: var(--t2);
+      transition: var(--tr)
+    }
+
+    .spill.live {
+      color: var(--gn);
+      border-color: rgba(0, 255, 136, 0.25)
+    }
+
+    .spill .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0
+    }
+
+    .spill.live .dot {
+      box-shadow: 0 0 5px var(--gn);
+      animation: blk 1.2s ease-in-out infinite
+    }
+
+    @keyframes blk {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.25
+      }
+    }
+
+    #rec-pill {
+      display: none;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255, 68, 102, .1);
+      border: 1px solid rgba(255, 68, 102, .3);
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-family: var(--fm);
+      font-size: 11px;
+      color: var(--rd);
+      animation: blk 1s ease-in-out infinite
+    }
+
+    #rec-pill.on {
+      display: flex
+    }
+
+    .t-right {
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    /* WORKSPACE */
+    #workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden
+    }
+
+    /* PREVIEW */
+    #prev {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      position: relative;
+      overflow: hidden;
+      min-width: 0;
+      background: var(--bg1)
+    }
+
+    #aframe {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    #aframe::before,
+    #aframe::after,
+    .cbr,
+    .cbl {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-color: var(--ac);
+      border-style: solid;
+      opacity: .35;
+      pointer-events: none;
+      z-index: 5;
+      transition: opacity .3s
+    }
+
+    #aframe::before {
+      top: 0;
+      left: 0;
+      border-width: 2px 0 0 2px
+    }
+
+    #aframe::after {
+      top: 0;
+      right: 0;
+      border-width: 2px 2px 0 0
+    }
+
+    .cbl {
+      bottom: 0;
+      left: 0;
+      border-width: 0 0 2px 2px
+    }
+
+    .cbr {
+      bottom: 0;
+      right: 0;
+      border-width: 0 2px 2px 0
+    }
+
+    #out-canvas {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain
+    }
+
+    #ph {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      z-index: 4;
+      background: var(--bg1)
+    }
+
+    #ph.h {
+      display: none
+    }
+
+    .ph-ring {
+      position: absolute;
+      inset: -10px;
+      border: 1px dashed rgba(255, 255, 255, .09);
+      border-radius: 50%;
+      animation: spin 14s linear infinite
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .ph-ico {
+      position: relative;
+      width: 68px;
+      height: 68px
+    }
+
+    .ph-ico svg {
+      width: 100%;
+      height: 100%;
+      stroke: var(--t2)
+    }
+
+    .ph-t {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--t1);
+      text-align: center
+    }
+
+    .ph-s {
+      font-size: 12px;
+      color: var(--t2);
+      text-align: center
+    }
+
+    #zbadge {
+      position: absolute;
+      bottom: 9px;
+      left: 9px;
+      background: rgba(8, 11, 16, .75);
+      border: 1px solid var(--gb);
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-family: var(--fm);
+      font-size: 10px;
+      color: var(--t1);
+      opacity: 0;
+      transition: opacity .3s;
+      pointer-events: none;
+      z-index: 6
+    }
+
+    #zbadge.s {
+      opacity: 1
+    }
+
+    /* PANEL */
+    #panel {
+      width: var(--pw);
+      flex-shrink: 0;
+      background: rgba(10, 14, 20, .9);
+      border-left: 1px solid var(--gb);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: var(--bg3) transparent
+    }
+
+    #panel::-webkit-scrollbar {
+      width: 3px
+    }
+
+    #panel::-webkit-scrollbar-thumb {
+      background: var(--bg3);
+      border-radius: 2px
+    }
+
+    .ps {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--gb)
+    }
+
+    .ps:last-child {
+      border-bottom: none
+    }
+
+    .pl {
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--t2);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    .pl::before {
+      content: '';
+      width: 10px;
+      height: 1px;
+      background: var(--ac);
+      opacity: .5
+    }
+
+    /* Big button */
+    #btn-go {
+      width: 100%;
+      height: 48px;
+      border-radius: var(--rmd);
+      border: 1.5px solid rgba(0, 229, 255, .28);
+      background: linear-gradient(135deg, rgba(0, 229, 255, .07), rgba(124, 58, 237, .07));
+      color: var(--ac);
+      font-family: var(--fu);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: var(--tr);
+      position: relative;
+      overflow: hidden
+    }
+
+    #btn-go::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(0, 229, 255, .14), rgba(124, 58, 237, .14));
+      opacity: 0;
+      transition: opacity .2s
+    }
+
+    #btn-go:hover::before {
+      opacity: 1
+    }
+
+    #btn-go:active {
+      transform: scale(.98)
+    }
+
+    #btn-go.run {
+      border-color: rgba(255, 68, 102, .35);
+      color: var(--rd);
+      background: linear-gradient(135deg, rgba(255, 68, 102, .07), rgba(200, 20, 50, .05))
+    }
+
+    .borb {
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      border: 1.5px solid currentColor;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 7px;
+      flex-shrink: 0
+    }
+
+    /* Icon btn */
+    .ib {
+      width: 33px;
+      height: 33px;
+      border-radius: var(--rsm);
+      border: 1px solid var(--gb);
+      background: var(--bg2);
+      color: var(--t1);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      transition: var(--tr);
+      flex-shrink: 0;
+      position: relative
+    }
+
+    .ib:hover {
+      border-color: var(--gbh);
+      color: var(--t0);
+      background: var(--bg3)
+    }
+
+    .ib.on {
+      border-color: rgba(0, 229, 255, .35);
+      color: var(--ac);
+      background: rgba(0, 229, 255, .07)
+    }
+
+    .ib:active {
+      transform: scale(.9)
+    }
+
+    .ib[data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 4px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg3);
+      border: 1px solid var(--gb);
+      color: var(--t1);
+      font-size: 10px;
+      white-space: nowrap;
+      padding: 3px 6px;
+      border-radius: 4px;
+      pointer-events: none;
+      z-index: 100
+    }
+
+    .brow {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap
+    }
+
+    /* Act btn */
+    .ab {
+      flex: 1;
+      padding: 6px 4px;
+      border-radius: var(--rsm);
+      border: 1px solid var(--gb);
+      background: var(--bg2);
+      color: var(--t1);
+      font-family: var(--fu);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+      transition: var(--tr);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px
+    }
+
+    .ab:hover {
+      border-color: var(--gbh);
+      color: var(--t0);
+      background: var(--bg3)
+    }
+
+    .ab:active {
+      transform: scale(.96)
+    }
+
+    .ab.ac {
+      border-color: rgba(0, 229, 255, .28);
+      color: var(--ac)
+    }
+
+    .ab.ac:hover {
+      background: rgba(0, 229, 255, .07)
+    }
+
+    .ab.re {
+      border-color: rgba(255, 68, 102, .28);
+      color: var(--rd)
+    }
+
+    .ab.re:hover {
+      background: rgba(255, 68, 102, .07)
+    }
+
+    .ab.re.on {
+      background: rgba(255, 68, 102, .1);
+      animation: blk 1s infinite
+    }
+
+    /* Ctrl row */
+    .cr {
+      margin-bottom: 8px
+    }
+
+    .cr:last-child {
+      margin-bottom: 0
+    }
+
+    .ch {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px
+    }
+
+    .cn {
+      font-size: 11px;
+      color: var(--t1)
+    }
+
+    .cv {
+      font-family: var(--fm);
+      font-size: 10px;
+      color: var(--ac);
+      background: rgba(0, 229, 255, .07);
+      border: 1px solid rgba(0, 229, 255, .14);
+      padding: 1px 5px;
+      border-radius: 4px;
+      min-width: 32px;
+      text-align: center
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--bg3);
+      outline: none;
+      cursor: pointer
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--ac);
+      box-shadow: 0 0 5px rgba(0, 229, 255, .5);
+      cursor: grab
+    }
+
+    input[type=range]::-webkit-slider-thumb:active {
+      transform: scale(1.3);
+      cursor: grabbing
+    }
+
+    input[type=range]::-moz-range-thumb {
+      width: 13px;
+      height: 13px;
+      border: none;
+      border-radius: 50%;
+      background: var(--ac)
+    }
+
+    /* Pills */
+    .pg {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap
+    }
+
+    .pi {
+      flex: 1;
+      min-width: 0;
+      padding: 5px 3px;
+      border-radius: var(--rsm);
+      border: 1px solid var(--gb);
+      background: var(--bg2);
+      color: var(--t1);
+      font-size: 10px;
+      font-weight: 500;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--tr);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .pi:hover {
+      border-color: var(--gbh);
+      color: var(--t0)
+    }
+
+    .pi.on {
+      border-color: rgba(0, 229, 255, .38);
+      color: var(--ac);
+      background: rgba(0, 229, 255, .08)
+    }
+
+    /* Swatches */
+    .sw-row {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap
+    }
+
+    .sw {
+      width: 25px;
+      height: 25px;
+      border-radius: var(--rsm);
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: var(--tr);
+      position: relative
+    }
+
+    .sw:hover {
+      transform: scale(1.12)
+    }
+
+    .sw.on {
+      border-color: #fff;
+      transform: scale(1.12)
+    }
+
+    .sw[title]:hover::after {
+      content: attr(title);
+      position: absolute;
+      bottom: calc(100% + 4px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg3);
+      border: 1px solid var(--gb);
+      color: var(--t1);
+      font-size: 10px;
+      white-space: nowrap;
+      padding: 3px 6px;
+      border-radius: 4px;
+      pointer-events: none;
+      z-index: 100
+    }
+
+    #cpwrap {
+      display: none;
+      align-items: center;
+      gap: 7px;
+      margin-top: 7px
+    }
+
+    #cpwrap.s {
+      display: flex
+    }
+
+    #cpick {
+      width: 32px;
+      height: 25px;
+      border-radius: 4px;
+      border: 1px solid var(--gb);
+      background: none;
+      cursor: pointer;
+      padding: 2px
+    }
+
+    /* statusbar */
+    #sbar {
+      height: 23px;
+      flex-shrink: 0;
+      background: rgba(8, 11, 16, .93);
+      border-top: 1px solid var(--gb);
+      display: flex;
+      align-items: center;
+      padding: 0 13px;
+      gap: 16px;
+      font-family: var(--fm);
+      font-size: 10px;
+      color: var(--t2)
+    }
+
+    #sbar span {
+      display: flex;
+      align-items: center;
+      gap: 4px
+    }
+
+    .sd {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--t2)
+    }
+
+    .sd.on {
+      background: var(--gn);
+      box-shadow: 0 0 4px var(--gn)
+    }
+
+    #mob-btn {
+      display: none;
+      position: fixed;
+      bottom: 13px;
+      right: 13px;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--ac);
+      color: var(--bg0);
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 0 18px rgba(0, 229, 255, .4);
+      z-index: 100;
+      align-items: center;
+      justify-content: center
+    }
+
+    #video-el,
+    #src-canvas {
+      display: none
+    }
+
+    @media(max-width:650px) {
+      :root {
+        --pw: 250px
+      }
+
+      #panel {
+        display: none;
+        position: fixed;
+        right: 0;
+        top: 50px;
+        bottom: 23px;
+        z-index: 50
+      }
+
+      #panel.mo {
+        display: flex
+      }
+
+      #mob-btn {
+        display: flex
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <header id="topbar">
+      <div class="logo">
+        <div class="logo-icon">AC</div>
+        <span class="logo-txt">ASCII Cam</span>
+        <span class="logo-badge">Santosh Rathod</span>
+      </div>
+      <div class="t-stats">
+        <div class="spill" id="fps-pill"><span class="dot"></span><span id="fps-v">-- FPS</span></div>
+        <div class="spill" id="mode-pill" style="border-color:rgba(0,229,255,.18);color:var(--ac)"><span
+            id="mode-v">Grayscale</span></div>
+        <div class="spill" id="res-pill"><span id="res-v">--</span></div>
+        <div id="rec-pill"><span class="dot" style="background:var(--rd)"></span>REC</div>
+      </div>
+      <div class="t-right">
+        <button class="ib" data-tip="Fullscreen" onclick="toggleFS()">⛶</button>
+      </div>
+    </header>
+
+    <div id="workspace">
+      <div id="prev">
+        <div id="aframe">
+          <div class="cbl"></div>
+          <div class="cbr"></div>
+          <div id="ph">
+            <div class="ph-ico">
+              <div class="ph-ring"></div>
+              <svg viewBox="0 0 72 72" fill="none">
+                <rect x="6" y="16" width="60" height="44" rx="7" stroke-width="2" />
+                <circle cx="36" cy="38" r="13" stroke-width="2" />
+                <circle cx="36" cy="38" r="5" stroke-width="2" />
+                <rect x="25" y="11" width="22" height="8" rx="3" stroke-width="2" />
+                <circle cx="58" cy="26" r="4" stroke-width="2" fill="currentColor" opacity=".35" />
+              </svg>
+            </div>
+            <p class="ph-t">No Camera Feed</p>
+            <p class="ph-s" id="ph-msg">Press Start to initialize webcam</p>
+          </div>
+          <canvas id="out-canvas"></canvas>
+          <div id="zbadge">100%</div>
+        </div>
+      </div>
+
+      <aside id="panel">
+        <div class="ps">
+          <button id="btn-go" onclick="toggleCam()">
+            <span class="borb" id="borb">▶</span>
+            <span id="go-lbl">START CAMERA</span>
+          </button>
+        </div>
+
+        <!-- QUALITY PRESET -->
+        <div class="ps">
+          <div class="pl">Quality Preset</div>
+          <div class="pg" id="presets">
+            <div class="pi" data-p="perf" onclick="setPreset(this)">⚡ Perf</div>
+            <div class="pi on" data-p="bal" onclick="setPreset(this)">⚖ Balanced</div>
+            <div class="pi" data-p="hd" onclick="setPreset(this)">🔍 HD</div>
+            <div class="pi" data-p="ultra" onclick="setPreset(this)">💎 Ultra</div>
+          </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="ps">
+          <div class="pl">Actions</div>
+          <div class="brow" style="margin-bottom:7px">
+            <button class="ib" data-tip="Mirror" id="b-mir" onclick="tog('mirrored','b-mir')">⇄</button>
+            <button class="ib" data-tip="Invert" id="b-inv" onclick="doInvert()">◑</button>
+            <button class="ib" data-tip="Bold" id="b-bld" onclick="tog('bold','b-bld')"><b>B</b></button>
+            <button class="ib" data-tip="Flip Camera" onclick="flipCam()">↻</button>
+            <button class="ib" data-tip="Edge Detect" id="b-edg" onclick="tog('edgeBlend','b-edg')">◈</button>
+            <button class="ib" data-tip="Sharpen" id="b-shp" onclick="tog('sharpen','b-shp')">✦</button>
+          </div>
+          <div class="brow" style="margin-bottom:5px">
+            <button class="ab ac" onclick="capFrame()">📸 Capture</button>
+            <button class="ab re" id="b-rec" onclick="toggleRec()">⏺ Record</button>
+          </div>
+          <div class="brow">
+            <button class="ab" onclick="dlTxt()">↓ TXT</button>
+            <button class="ab" onclick="dlPng()">↓ PNG</button>
+          </div>
+        </div>
+
+        <!-- RESOLUTION -->
+        <div class="ps">
+          <div class="pl">Resolution &amp; Font</div>
+          <div class="cr">
+            <div class="ch"><span class="cn">ASCII Columns</span><span class="cv" id="v-c">160</span></div>
+            <input type="range" id="sl-c" min="60" max="300" step="10" value="160" oninput="rng(this,'v-c');applyS()">
+          </div>
+          <div class="cr">
+            <div class="ch"><span class="cn">Source Scale</span><span class="cv" id="v-sc">2×</span></div>
+            <input type="range" id="sl-sc" min="1" max="4" step="1" value="2" oninput="onSrc(this)">
+          </div>
+          <div class="cr">
+            <div class="ch"><span class="cn">Font Size</span><span class="cv" id="v-fs">8px</span></div>
+            <input type="range" id="sl-fs" min="4" max="16" step=".5" value="8" oninput="onFS(this)">
+          </div>
+          <div class="cr">
+            <div class="ch"><span class="cn">Zoom</span><span class="cv" id="v-zm">100%</span></div>
+            <input type="range" id="sl-zm" min="50" max="200" step="5" value="100" oninput="onZoom(this)">
+          </div>
+          <div class="cr">
+            <div class="ch"><span class="cn">FPS Limit</span><span class="cv" id="v-fps">30</span></div>
+            <input type="range" id="sl-fps" min="5" max="60" step="5" value="30" oninput="rng(this,'v-fps');applyS()">
+          </div>
+        </div>
+
+        <!-- CHAR SET -->
+        <div class="ps">
+          <div class="pl">Character Set</div>
+          <div class="pg" id="cs-g">
+            <div class="pi" data-cs="minimal" onclick="setCS(this)">Minimal</div>
+            <div class="pi on" data-cs="standard" onclick="setCS(this)">Standard</div>
+            <div class="pi" data-cs="extended" onclick="setCS(this)">Extended</div>
+            <div class="pi" data-cs="blocks" onclick="setCS(this)">Blocks</div>
+          </div>
+          <div class="cr" style="margin-top:9px">
+            <div class="ch"><span class="cn">Density</span><span class="cv" id="v-den">16</span></div>
+            <input type="range" id="sl-den" min="3" max="32" step="1" value="16" oninput="rng(this,'v-den');applyS()">
+          </div>
+        </div>
+
+        <!-- IMAGE ADJ -->
+        <div class="ps">
+          <div class="pl">Image Adjustments</div>
+          <div class="cr">
+            <div class="ch"><span class="cn">Brightness</span><span class="cv" id="v-br">0</span></div>
+            <input type="range" id="sl-br" min="-100" max="100" step="2" value="0" oninput="rng(this,'v-br')">
+          </div>
+          <div class="cr">
+            <div class="ch"><span class="cn">Contrast</span><span class="cv" id="v-co">1.0</span></div>
+            <input type="range" id="sl-co" min=".1" max="4" step=".1" value="1" oninput="rnf(this,'v-co',1)">
+          </div>
+          <div class="cr">
+            <div class="ch"><span class="cn">Gamma</span><span class="cv" id="v-ga">1.0</span></div>
+            <input type="range" id="sl-ga" min=".3" max="3" step=".1" value="1" oninput="rnf(this,'v-ga',1)">
+          </div>
+          <div class="cr">
+            <div class="ch"><span class="cn">Threshold</span><span class="cv" id="v-th">0</span></div>
+            <input type="range" id="sl-th" min="0" max="200" step="2" value="0" oninput="rng(this,'v-th')">
+          </div>
+          <div class="cr">
+            <div class="ch"><span class="cn">Edge Strength</span><span class="cv" id="v-es">0.40</span></div>
+            <input type="range" id="sl-es" min="0" max="1" step=".05" value=".4" oninput="rnf(this,'v-es',2)">
+          </div>
+        </div>
+
+        <!-- COLOR MODE -->
+        <div class="ps">
+          <div class="pl">Color Mode</div>
+          <div class="sw-row" id="sws">
+            <div class="sw on" data-cm="gray" title="Grayscale" style="background:linear-gradient(135deg,#ccc,#333)"
+              onclick="setCM(this)"></div>
+            <div class="sw" data-cm="color" title="Full Color"
+              style="background:linear-gradient(135deg,#f00 0%,#0f0 50%,#00f)" onclick="setCM(this)"></div>
+            <div class="sw" data-cm="green" title="Matrix" style="background:linear-gradient(135deg,#002200,#00ff44)"
+              onclick="setCM(this)"></div>
+            <div class="sw" data-cm="amber" title="Amber" style="background:linear-gradient(135deg,#2a1000,#ffaa00)"
+              onclick="setCM(this)"></div>
+            <div class="sw" data-cm="cyan" title="Cyan" style="background:linear-gradient(135deg,#001a22,#00e5ff)"
+              onclick="setCM(this)"></div>
+            <div class="sw" data-cm="red" title="Red Heat" style="background:linear-gradient(135deg,#200008,#ff4466)"
+              onclick="setCM(this)"></div>
+            <div class="sw" data-cm="custom" title="Custom"
+              style="background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)" onclick="setCM(this)"></div>
+          </div>
+          <div id="cpwrap">
+            <input type="color" id="cpick" value="#ff00cc" oninput="applyS()">
+            <span style="font-size:11px;color:var(--t2)">Pick custom color</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div id="sbar">
+      <span><span class="sd" id="st-dot"></span><span id="st-c">Camera off</span></span>
+      <span id="st-g">—</span>
+      <span id="st-src">—</span>
+      <span id="st-f">—</span>
+      <span id="st-tot">0 frames</span>
+    </div>
+  </div>
+
+  <button id="mob-btn" onclick="document.getElementById('panel').classList.toggle('mo')">⚙</button>
+  <video id="video-el" autoplay playsinline muted></video>
+  <!-- src-canvas: rendered at cols×srcScale resolution for block averaging -->
+  <canvas id="src-canvas"></canvas>
+
+  <script>
+    /* ═══════════════════════════════════════════════════════════
+       CHARACTER SETS  (index 0 = densest, last = lightest/space)
+       We store them sparse→dense so charLUT maps: lum 255(white)→space, lum 0(black)→dense
+    ═══════════════════════════════════════════════════════════ */
+    const CS = {
+      minimal: ' .+#@',
+      standard: " .'`^\",:;Il!i~+_-?][}{1)(|\\/*tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$",
+      extended: " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$░▒▓",
+      blocks: ' ·:+▪▫▬▮█',
+    };
+
+    /* ═══════════════════════════════════════════════════════════
+       PRESETS
+    ═══════════════════════════════════════════════════════════ */
+    const PRESETS = {
+      perf: { c: 80, s: 1, fps: 60, d: 10 },
+      bal: { c: 160, s: 2, fps: 30, d: 16 },
+      hd: { c: 220, s: 3, fps: 20, d: 22 },
+      ultra: { c: 280, s: 4, fps: 12, d: 28 },
+    };
+
+    /* ═══════════════════════════════════════════════════════════
+       STATE
+    ═══════════════════════════════════════════════════════════ */
+    const S = {
+      running: false, stream: null, rafId: null,
+      mirrored: false, inverted: false, bold: false, edgeBlend: false, sharpen: false,
+      csName: 'standard', colorMode: 'gray', customRGB: [255, 0, 204],
+      cols: 160, srcScale: 2, fontSize: 8, zoom: 1,
+      brightness: 0, contrast: 1, gamma: 1, threshold: 0, edgeStrength: .4, density: 16,
+      fpsLimit: 30, facing: 'user',
+      recording: false, recFrames: [],
+      frameTot: 0, lastFrame: '', lastFrameT: 0,
+      charSet: '', charLUT: null,
+    };
+
+    /* ═══════════════════════════════════════════════════════════
+       DOM
+    ═══════════════════════════════════════════════════════════ */
+    const video = document.getElementById('video-el');
+    const srcC = document.getElementById('src-canvas');
+    const sCtx = srcC.getContext('2d', { willReadFrequently: true });
+    const outC = document.getElementById('out-canvas');
+    const oCtx = outC.getContext('2d');
+
+    /* ═══════════════════════════════════════════════════════════
+       GAMMA LUT
+    ═══════════════════════════════════════════════════════════ */
+    const gLUT = new Uint8Array(256);
+    function buildGLUT(g) {
+      const inv = 1 / Math.max(.01, g);
+      for (let i = 0; i < 256; i++) gLUT[i] = (Math.pow(i / 255, inv) * 255 + .5) | 0;
+    }
+    buildGLUT(1);
+
+    /* ═══════════════════════════════════════════════════════════
+       CHAR LOOKUP TABLE  — precomputed array indexed by lum 0..255
+       lum=0(black)→densest char  |  lum=255(white)→' '
+    ═══════════════════════════════════════════════════════════ */
+    function buildCharLUT() {
+      const cs = S.charSet, len = cs.length - 1;
+      const lut = new Array(256);
+      for (let i = 0; i < 256; i++) lut[i] = cs[len - Math.min(len, (i / 255 * len + .5) | 0)];
+      S.charLUT = lut;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       BUILD CHAR SET from named set + density
+    ═══════════════════════════════════════════════════════════ */
+    function buildCharSet() {
+      const full = CS[S.csName] || CS.standard;
+      const take = Math.min(full.length, Math.max(2, S.density));
+      if (take >= full.length) { S.charSet = full; return; }
+      let s = ' ';
+      for (let i = 1; i < take; i++) s += full[Math.round(i / (take - 1) * (full.length - 1))];
+      if (s[s.length - 1] !== full[full.length - 1]) s += full[full.length - 1];
+      S.charSet = s;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       SHARPEN KERNEL  3×3 unsharp-mask applied to source pixels
+       center=5, cardinal neighbours=-1, corners=0
+    ═══════════════════════════════════════════════════════════ */
+    function applySharpen(data, w, h) {
+      const tmp = new Uint8Array(data.length);
+      tmp.set(data);
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const p = (y * w + x) * 4;
+          for (let c = 0; c < 3; c++) {
+            let v = 5 * tmp[p + c]
+              - tmp[((y - 1) * w + x) * 4 + c]
+              - tmp[(y * w + x - 1) * 4 + c]
+              - tmp[(y * w + x + 1) * 4 + c]
+              - tmp[((y + 1) * w + x) * 4 + c];
+            data[p + c] = v < 0 ? 0 : v > 255 ? 255 : v;
+          }
+        }
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       SOBEL EDGE MAP → Float32Array 0..1 per pixel
+       Computed on the block-averaged grid (fast, low-res)
+    ═══════════════════════════════════════════════════════════ */
+    function buildEdgeMap(cells, w, h) {
+      const e = new Float32Array(w * h);
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          // Luminance of 3×3 neighbourhood (using precomputed lum channel = index 3)
+          const L = (cx, cy) => cells[(cy * w + cx) * 4 + 3];
+          const tl = L(x - 1, y - 1), tc = L(x, y - 1), tr = L(x + 1, y - 1);
+          const ml = L(x - 1, y), mr = L(x + 1, y);
+          const bl = L(x - 1, y + 1), bc = L(x, y + 1), br = L(x + 1, y + 1);
+          const gx = -tl - 2 * ml - bl + tr + 2 * mr + br;
+          const gy = -tl - 2 * tc - tr + bl + 2 * bc + br;
+          e[y * w + x] = Math.min(1, Math.sqrt(gx * gx + gy * gy) / 1020); // 1020 = 4*255
+        }
+      }
+      return e;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       BLOCK AVERAGE DOWNSCALE
+       srcCanvas rendered at cols×srcScale width → each ASCII cell
+       averages srcScale² source pixels.  Returns Float32Array
+       with [r,g,b,lum] per cell  (0..255 range).
+    ═══════════════════════════════════════════════════════════ */
+    function blockAvg(data, srcW, srcH, cols, rows, sc) {
+      const out = new Float32Array(cols * rows * 4);
+      const sc2 = sc * sc;
+      for (let cy = 0; cy < rows; cy++) {
+        for (let cx = 0; cx < cols; cx++) {
+          let sr = 0, sg = 0, sb = 0, n = 0;
+          for (let by = 0; by < sc; by++) {
+            for (let bx = 0; bx < sc; bx++) {
+              const px = cx * sc + bx, py = cy * sc + by;
+              if (px >= srcW || py >= srcH) continue;
+              const i = (py * srcW + px) * 4;
+              sr += data[i]; sg += data[i + 1]; sb += data[i + 2]; n++;
+            }
+          }
+          if (!n) n = 1;
+          const r = sr / n, g = sg / n, b = sb / n;
+          const base = (cy * cols + cx) * 4;
+          out[base] = r; out[base + 1] = g; out[base + 2] = b;
+          out[base + 3] = 0.299 * r + 0.587 * g + 0.114 * b; // perceptual lum
+        }
+      }
+      return out;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       PROCESS PIXELS — brightness / contrast / gamma / invert / threshold
+       Applied in-place to Uint8ClampedArray (source canvas)
+    ═══════════════════════════════════════════════════════════ */
+    function procPx(data, n) {
+      const br = S.brightness, co = S.contrast, inv = S.inverted, th = S.threshold;
+      for (let i = 0; i < n * 4; i += 4) {
+        let r = data[i], g = data[i + 1], b = data[i + 2];
+        r = (r + br) | 0; g = (g + br) | 0; b = (b + br) | 0;
+        r = ((r - 128) * co + 128) | 0; g = ((g - 128) * co + 128) | 0; b = ((b - 128) * co + 128) | 0;
+        r = r < 0 ? 0 : r > 255 ? 255 : r; g = g < 0 ? 0 : g > 255 ? 255 : g; b = b < 0 ? 0 : b > 255 ? 255 : b;
+        r = gLUT[r]; g = gLUT[g]; b = gLUT[b];
+        if (inv) { r = 255 - r; g = 255 - g; b = 255 - b; }
+        if (th > 0) { const l = 0.299 * r + 0.587 * g + 0.114 * b; const t = l < th ? 0 : 255; r = g = b = t; }
+        data[i] = r; data[i + 1] = g; data[i + 2] = b;
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       CHAR WIDTH RATIO for JetBrains Mono (measured)
+    ═══════════════════════════════════════════════════════════ */
+    const CWR = 0.601;
+
+    /* ═══════════════════════════════════════════════════════════
+       RENDER TO OUTPUT CANVAS
+       All modes (text, color) draw directly to outC via fillText.
+    ═══════════════════════════════════════════════════════════ */
+    function renderFrame(cells, edgeMap, cols, rows) {
+      const fs = S.fontSize;
+      const lh = fs;          // tight line height = font size
+      const cw = fs * CWR;
+      const canW = Math.ceil(cols * cw);
+      const canH = Math.ceil(rows * lh);
+
+      outC.width = canW; outC.height = canH;
+      oCtx.fillStyle = S.inverted ? '#f4f4f0' : '#080b10';
+      oCtx.fillRect(0, 0, canW, canH);
+      oCtx.font = `${S.bold ? 700 : 400} ${fs}px 'JetBrains Mono','Courier New',monospace`;
+      oCtx.textBaseline = 'top';
+
+      const cm = S.colorMode;
+      const useEdge = S.edgeBlend && edgeMap;
+      const es = S.edgeStrength;
+      const lut = S.charLUT;
+
+      // Mono color RGB components
+      let mr = 232, mg = 237, mb = 245;
+      if (cm === 'green') { mr = 0; mg = 255; mb = 136; }
+      else if (cm === 'amber') { mr = 255; mg = 170; mb = 0; }
+      else if (cm === 'cyan') { mr = 0; mg = 229; mb = 255; }
+      else if (cm === 'red') { mr = 255; mg = 68; mb = 102; }
+      else if (cm === 'custom') { [mr, mg, mb] = S.customRGB; }
+      else if (cm === 'gray' && S.inverted) { mr = mg = mb = 20; }
+
+      const txtLines = new Array(rows);
+      let lastFill = '';
+
+      for (let cy = 0; cy < rows; cy++) {
+        let line = '';
+        for (let cx = 0; cx < cols; cx++) {
+          const base = (cy * cols + cx) * 4;
+          const r = cells[base] | 0, g = cells[base + 1] | 0, b = cells[base + 2] | 0;
+          let lum = cells[base + 3] | 0;
+
+          // Edge enhancement: pull luminance down at edges → denser char there
+          if (useEdge) {
+            const e = edgeMap[cy * cols + cx];
+            lum = Math.max(0, lum - (e * es * 220) | 0);
+          }
+
+          const ch = lut[lum < 0 ? 0 : lum > 255 ? 255 : lum];
+          line += ch;
+          if (ch === ' ') continue;
+
+          let fill;
+          if (cm === 'color') {
+            fill = `rgb(${r},${g},${b})`;
+          } else {
+            // Modulate mono color by luminance so bright areas are dimmer
+            const fac = (255 - lum) / 255;
+            const fr = (mr * fac) | 0, fg = (mg * fac) | 0, fb = (mb * fac) | 0;
+            fill = `rgb(${fr < 0 ? 0 : fr},${fg < 0 ? 0 : fg},${fb < 0 ? 0 : fb})`;
+          }
+          if (fill !== lastFill) { oCtx.fillStyle = fill; lastFill = fill; }
+          oCtx.fillText(ch, cx * cw, cy * lh);
+        }
+        txtLines[cy] = line;
+      }
+      S.lastFrame = txtLines.join('\n');
+      outC.style.transform = `scale(${S.zoom})`;
+      outC.style.transformOrigin = 'center center';
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       RENDER LOOP
+    ═══════════════════════════════════════════════════════════ */
+    let fpsN = 0, fpsT = performance.now();
+
+    function renderLoop(ts) {
+      if (!S.running) return;
+      S.rafId = requestAnimationFrame(renderLoop);
+      if (video.readyState < 2) return;
+
+      // FPS limiter
+      if (ts - S.lastFrameT < 1000 / S.fpsLimit - 1) return;
+      S.lastFrameT = ts;
+
+      const cols = S.cols, sc = S.srcScale;
+      const aspect = (video.videoWidth / video.videoHeight) || 1.777;
+      // Rows corrected for monospace aspect: chars are ~1/CWR taller than wide
+      const rows = Math.round(cols / aspect * CWR) | 0 || 1;
+      const srcW = cols * sc, srcH = rows * sc;
+
+      // ── 1. Capture high-res source frame ──────────────────────
+      srcC.width = srcW; srcC.height = srcH;
+      sCtx.save();
+      if (S.mirrored) { sCtx.translate(srcW, 0); sCtx.scale(-1, 1); }
+      sCtx.drawImage(video, 0, 0, srcW, srcH);
+      sCtx.restore();
+
+      // ── 2. Read pixels & apply adjustments ────────────────────
+      const id = sCtx.getImageData(0, 0, srcW, srcH);
+      const raw = id.data;
+      procPx(raw, srcW * srcH);
+
+      // ── 3. Optional sharpen on source ─────────────────────────
+      if (S.sharpen) applySharpen(raw, srcW, srcH);
+
+      // ── 4. Block-average downsample to ASCII grid ──────────────
+      //      Each cell = average of sc² pixels from source
+      //      This is the KEY quality improvement: more source data per character
+      const cells = blockAvg(raw, srcW, srcH, cols, rows, sc);
+
+      // ── 5. Optional Sobel edge map (on downsampled grid, fast) ──
+      const edgeMap = S.edgeBlend ? buildEdgeMap(cells, cols, rows) : null;
+
+      // ── 6. Render chars to output canvas ──────────────────────
+      renderFrame(cells, edgeMap, cols, rows);
+
+      // ── Bookkeeping ───────────────────────────────────────────
+      S.frameTot++;
+      document.getElementById('st-tot').textContent = S.frameTot + ' frames';
+      document.getElementById('st-g').textContent = cols + '×' + rows;
+      document.getElementById('st-src').textContent = 'src ' + srcW + '×' + srcH;
+      document.getElementById('res-v').textContent = cols + '×' + rows;
+      const fl = [];
+      if (S.sharpen) fl.push('Sharpen');
+      if (S.edgeBlend) fl.push('Edge');
+      document.getElementById('st-f').textContent = fl.join('+') || '—';
+
+      fpsN++;
+      const now = performance.now();
+      if (now - fpsT >= 600) {
+        document.getElementById('fps-v').textContent = Math.round(fpsN / ((now - fpsT) / 1000)) + ' FPS';
+        fpsN = 0; fpsT = now;
+      }
+      if (S.recording && S.frameTot % 2 === 0) {
+        S.recFrames.push(S.lastFrame);
+        if (S.recFrames.length >= 120) stopRec();
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       CAMERA
+    ═══════════════════════════════════════════════════════════ */
+    async function toggleCam() { S.running ? stopCam() : await startCam(); }
+
+    async function startCam() {
+      try {
+        S.stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: S.facing, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false
+        });
+        video.srcObject = S.stream;
+        await video.play();
+        S.running = true;
+        document.getElementById('ph').classList.add('h');
+        document.getElementById('btn-go').classList.add('run');
+        document.getElementById('go-lbl').textContent = 'STOP CAMERA';
+        document.getElementById('borb').textContent = '■';
+        document.getElementById('fps-pill').classList.add('live');
+        document.getElementById('st-dot').classList.add('on');
+        document.getElementById('st-c').textContent = 'Camera active';
+        applyS(); S.lastFrameT = 0; renderLoop(0);
+      } catch (e) {
+        document.getElementById('ph-msg').textContent = 'Permission denied or unavailable.';
+      }
+    }
+
+    function stopCam() {
+      S.running = false; cancelAnimationFrame(S.rafId);
+      if (S.stream) S.stream.getTracks().forEach(t => t.stop());
+      S.stream = null; video.srcObject = null;
+      document.getElementById('ph').classList.remove('h');
+      document.getElementById('btn-go').classList.remove('run');
+      document.getElementById('go-lbl').textContent = 'START CAMERA';
+      document.getElementById('borb').textContent = '▶';
+      document.getElementById('fps-pill').classList.remove('live');
+      document.getElementById('fps-v').textContent = '-- FPS';
+      document.getElementById('st-dot').classList.remove('on');
+      document.getElementById('st-c').textContent = 'Camera off';
+    }
+
+    async function flipCam() {
+      S.facing = S.facing === 'user' ? 'environment' : 'user';
+      if (S.running) { stopCam(); await startCam(); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       SETTINGS
+    ═══════════════════════════════════════════════════════════ */
+    function applyS() {
+      S.cols = parseInt(document.getElementById('sl-c').value);
+      S.srcScale = parseInt(document.getElementById('sl-sc').value);
+      S.fpsLimit = parseInt(document.getElementById('sl-fps').value);
+      S.brightness = parseInt(document.getElementById('sl-br').value);
+      S.contrast = parseFloat(document.getElementById('sl-co').value);
+      S.gamma = parseFloat(document.getElementById('sl-ga').value);
+      S.threshold = parseInt(document.getElementById('sl-th').value);
+      S.edgeStrength = parseFloat(document.getElementById('sl-es').value);
+      S.density = parseInt(document.getElementById('sl-den').value);
+      buildGLUT(S.gamma);
+      buildCharSet();
+      buildCharLUT();
+      if (S.colorMode === 'custom') S.customRGB = h2r(document.getElementById('cpick').value);
+      const ml = { gray: 'Grayscale', color: 'Full Color', green: 'Matrix', amber: 'Amber', cyan: 'Cyan', red: 'Red Heat', custom: 'Custom' };
+      document.getElementById('mode-v').textContent = ml[S.colorMode] || S.colorMode;
+    }
+
+    function h2r(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+
+    /* Presets */
+    function setPreset(el) {
+      document.querySelectorAll('#presets .pi').forEach(p => p.classList.remove('on'));
+      el.classList.add('on');
+      const p = PRESETS[el.dataset.p];
+      const set = (id, v) => { document.getElementById(id).value = v; };
+      set('sl-c', p.c); set('sl-sc', p.s); set('sl-fps', p.fps); set('sl-den', p.d);
+      document.getElementById('v-c').textContent = p.c;
+      document.getElementById('v-sc').textContent = p.s + '×';
+      document.getElementById('v-fps').textContent = p.fps;
+      document.getElementById('v-den').textContent = p.d;
+      allRB(); applyS();
+    }
+
+    /* Toggle */
+    function tog(key, bid) {
+      S[key] = !S[key];
+      document.getElementById(bid).classList.toggle('on', S[key]);
+    }
+    function doInvert() {
+      S.inverted = !S.inverted;
+      document.getElementById('b-inv').classList.toggle('on', S.inverted);
+      document.getElementById('prev').style.background = S.inverted ? '#e5e5e2' : '';
+    }
+
+    /* Char set & color */
+    function setCS(el) {
+      document.querySelectorAll('#cs-g .pi').forEach(p => p.classList.remove('on'));
+      el.classList.add('on'); S.csName = el.dataset.cs; applyS();
+    }
+    function setCM(el) {
+      document.querySelectorAll('#sws .sw').forEach(s => s.classList.remove('on'));
+      el.classList.add('on'); S.colorMode = el.dataset.cm;
+      document.getElementById('cpwrap').classList.toggle('s', S.colorMode === 'custom');
+      applyS();
+    }
+
+    /* Range helpers */
+    function rng(inp, vid) { document.getElementById(vid).textContent = inp.value; rb(inp); }
+    function rnf(inp, vid, d) { document.getElementById(vid).textContent = parseFloat(inp.value).toFixed(d); rb(inp); }
+    function onSrc(inp) { S.srcScale = parseInt(inp.value); document.getElementById('v-sc').textContent = inp.value + '×'; rb(inp); }
+    function onFS(inp) { S.fontSize = parseFloat(inp.value); document.getElementById('v-fs').textContent = S.fontSize.toFixed(1) + 'px'; rb(inp); }
+    function onZoom(inp) {
+      S.zoom = parseInt(inp.value) / 100;
+      document.getElementById('v-zm').textContent = inp.value + '%';
+      const zb = document.getElementById('zbadge');
+      zb.textContent = inp.value + '%'; zb.classList.add('s');
+      clearTimeout(zb._t); zb._t = setTimeout(() => zb.classList.remove('s'), 1200);
+      outC.style.transform = `scale(${S.zoom})`; outC.style.transformOrigin = 'center center';
+      rb(inp);
+    }
+    function rb(inp) {
+      const mn = parseFloat(inp.min), mx = parseFloat(inp.max), v = parseFloat(inp.value);
+      inp.style.background = `linear-gradient(to right,var(--ac) ${(v - mn) / (mx - mn) * 100}%,var(--bg3) ${(v - mn) / (mx - mn) * 100}%)`;
+    }
+    function allRB() { document.querySelectorAll('input[type=range]').forEach(rb); }
+
+    /* Capture & record */
+    function capFrame() {
+      if (!S.lastFrame) return;
+      const fl = document.createElement('div');
+      fl.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,.22);pointer-events:none;z-index:997;transition:opacity .35s';
+      document.body.appendChild(fl);
+      requestAnimationFrame(() => { fl.style.opacity = '0'; setTimeout(() => fl.remove(), 400); });
+      dlPng();
+    }
+    function toggleRec() { S.recording ? stopRec() : startRec(); }
+    function startRec() {
+      S.recording = true; S.recFrames = [];
+      document.getElementById('b-rec').classList.add('on');
+      document.getElementById('b-rec').textContent = '⏹ Stop';
+      document.getElementById('rec-pill').classList.add('on');
+    }
+    function stopRec() {
+      S.recording = false;
+      document.getElementById('b-rec').classList.remove('on');
+      document.getElementById('b-rec').textContent = '⏺ Record';
+      document.getElementById('rec-pill').classList.remove('on');
+      if (S.recFrames.length) {
+        const blob = new Blob([S.recFrames.join('\n\f\n')], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = 'ascii-rec.txt'; a.click(); URL.revokeObjectURL(a.href);
+      }
+    }
+    function dlTxt() {
+      if (!S.lastFrame) return;
+      const b = new Blob([S.lastFrame], { type: 'text/plain' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'ascii.txt'; a.click(); URL.revokeObjectURL(a.href);
+    }
+    function dlPng() {
+      if (!S.lastFrame) return;
+      const lines = S.lastFrame.split('\n');
+      const fs = 16, lh = 16, cw = Math.round(fs * CWR);
+      const W = lines[0].length * cw, H = lines.length * lh;
+      const dc = Object.assign(document.createElement('canvas'), { width: W, height: H });
+      const cx = dc.getContext('2d');
+      cx.fillStyle = S.inverted ? '#f4f4f0' : '#080b10'; cx.fillRect(0, 0, W, H);
+      cx.font = `${S.bold ? 700 : 400} ${fs}px 'JetBrains Mono','Courier New',monospace`;
+      cx.textBaseline = 'top';
+      let fc = S.inverted ? '#111' : '#e8edf5';
+      if (S.colorMode === 'green') fc = '#00ff88';
+      else if (S.colorMode === 'amber') fc = '#ffaa00';
+      else if (S.colorMode === 'cyan') fc = '#00e5ff';
+      else if (S.colorMode === 'red') fc = '#ff4466';
+      else if (S.colorMode === 'custom') { const [r, g, b] = S.customRGB; fc = `rgb(${r},${g},${b})`; }
+      cx.fillStyle = fc;
+      lines.forEach((ln, y) => cx.fillText(ln, 0, y * lh));
+      const a = document.createElement('a'); a.href = dc.toDataURL('image/png'); a.download = 'ascii.png'; a.click();
+    }
+    function toggleFS() {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+
+    /* INIT */
+    applyS(); allRB();
+  </script>
+</body>
+
+</html>
